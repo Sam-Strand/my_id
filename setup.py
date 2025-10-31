@@ -7,6 +7,9 @@ setup(
     author="Садовский М.К.",
     author_email="i@maxim-sadovskiy.ru",
     packages=find_packages(),
+    install_requires=[
+        "pydantic>=2.5.0",
+    ],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
     ],
