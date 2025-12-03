@@ -6,6 +6,7 @@ from pydantic_core import core_schema
 from pydantic import GetCoreSchemaHandler
 from typing import Any
 
+
 class MyID(str):
     '''
     Класс для уникальных идентификаторов длиной 22 символа:
@@ -87,6 +88,53 @@ class MyID(str):
         )
 
 
+class MyIDTuple(tuple):
+    """
+    Валидируемый кортеж MyID, передаваемый через строку с разделителем ','.
+    
+    Пример:
+        MyIDTuple('A123... , B456..., C789...')
+        → ('A123...', 'B456...', 'C789...') с проверкой каждого MyID
+    """
+
+    def __new__(cls, value):
+        if isinstance(value, cls):
+            return value
+
+        if isinstance(value, str):
+            raw_items = [v.strip() for v in value.split(',') if v.strip()]
+            if not raw_items:
+                raise ValueError('пустой список элементов MyID')
+            items = tuple(MyID(v) for v in raw_items)
+            return super().__new__(cls, items)
+
+        if isinstance(value, (list, tuple)):
+            items = tuple(MyID(v) for v in value)
+            return super().__new__(cls, items)
+
+        raise ValueError(f'Невозможно создать MyIDTuple из {value!r}')
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: type, handler: GetCoreSchemaHandler):
+        """
+        Интеграция с Pydantic.
+        При валидации value вызывается new.
+        Сериализация — в строку через ','.
+        """
+        def validate(value):
+            try:
+                return cls(value)
+            except ValueError as e:
+                raise ValueError(f'Невалидный MyIDTuple: {e}') from e
+
+        return core_schema.no_info_plain_validator_function(
+            function=validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda v: ','.join(str(x) for x in v)
+            )
+        )
+
+
 if __name__ == '__main__':
     print(MyID.derive("hello world"))
     # Примеры использования
@@ -110,3 +158,13 @@ if __name__ == '__main__':
             print(f"{value!r} -> {MyID(value)}")
         except ValueError as e:
             print(f"{value!r} -> Error: {e}")
+
+    # Пример использования MyIDTuple
+    t = MyIDTuple('xqqumRbXZ1KdIXDOBLcFTE,xELq0jsA9rgDlTkYXJXz6S,YXtOWu9Uv06iLOItdhPSWl')
+
+    print(t)  # -> ('xqqumRbXZ1KdIXDOBLcFTE', 'xELq0jsA9rgDlTkYXJXz6S', 'YXtOWu9Uv06iLOItdhPSWl')    
+
+    try:
+        MyIDTuple('невалидныйID, xELq0jsA9rgDlTkYXJXz6S')
+    except ValueError as e:
+        print('Ошибка:', e)

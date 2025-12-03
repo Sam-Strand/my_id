@@ -17,7 +17,7 @@ pip install git+https://github.com/Sam-Strand/my_id.git
 
 ### Способ 2: Установка готового пакета (без Git)
 ```bash
-pip install https://github.com/Sam-Strand/my_id/releases/download/v1.0.0/my_id-1.0.0-py3-none-any.whl
+pip install https://github.com/Sam-Strand/my_id/releases/download/v1.0.1/my_id-1.0.1-py3-none-any.whl
 ```
 
 ## Быстрый старт
@@ -40,4 +40,23 @@ try:
     print(f"Валидный ID: {valid_id}")
 except ValueError as e:
     print(f"Ошибка: {e}")
+```
+
+# MyIDTuple
+
+Создает кортеж (`tuple`) из MyID переданных строкой через запятую.
+Наследуется от tuple, содержит кортеж валидных MyID.
+Актуально для валидации параметров get запросов.
+
+## Пример
+```python
+# Создание кортежа ID из строки
+ids = MyIDTuple('xqqumRbXZ1KdIXDOBLcFTE,xELq0jsA9rgDlTkYXJXz6S,YXtOWu9Uv06iLOItdhPSWl')
+# Или из списка
+ids = MyIDTuple(['xqqumRbXZ1KdIXDOBLcFTE', MyID(), MyID('YXtOWu9Uv06iLOItdhPSWl')])  # Каждый элемент валидируется
+
+# Доступ к элементам
+first_id = ids[0]  # MyID('xqqumRbXZ1KdIXDOBLcFTE')
+for uid in ids:
+    print(uid)
 ```

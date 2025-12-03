@@ -1,3 +1,3 @@
-from .my_id import MyID
+from .my_id import MyID, MyIDTuple
 
-__all__ = ['MyID']
+__all__ = ['MyID', 'MyIDTuple']
