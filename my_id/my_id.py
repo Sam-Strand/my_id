@@ -88,7 +88,7 @@ class MyID(str):
         )
 
 
-class MyIDTuple(tuple):
+class MyIDTuple(str):
     """
     Валидируемый кортеж MyID, передаваемый через строку с разделителем ','.
     
