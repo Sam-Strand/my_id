@@ -89,42 +89,48 @@ class MyID(str):
 
 
 class MyIDTuple(tuple):
-    """
-    Валидируемый кортеж MyID, передаваемый через строку с разделителем ','.
-    
-    Пример:
-        MyIDTuple('A123... , B456..., C789...')
-        → ('A123...', 'B456...', 'C789...') с проверкой каждого MyID
-    """
-
+    '''
+    Валидируемый кортеж MyID, который принимает:
+    - строку через запятую
+    - список/кортеж с вложенностью
+    - комбинированно, включая ['id1,id2']
+    Рекурсивно разворачивает и возвращает одномерный tuple MyID.
+    '''
     def __new__(cls, value):
+        def flatten(v):
+            if isinstance(v, str):
+                if ',' not in v:
+                    return [MyID(v)]
+                parts = [x.strip() for x in v.split(',') if x.strip()]
+                result = []
+                for p in parts:
+                    result.extend(flatten(p))
+                return result
+            if isinstance(v, (list, tuple)):
+                result = []
+                for item in v:
+                    result.extend(flatten(item))
+                return result
+            if isinstance(v, MyID):
+                return [v]
+
+            raise ValueError(f'Невалидный элемент: {v!r}')
+
         if isinstance(value, cls):
             return value
 
-        if isinstance(value, str):
-            raw_items = [v.strip() for v in value.split(',') if v.strip()]
-            if not raw_items:
-                raise ValueError('пустой список элементов MyID')
-            items = tuple(MyID(v) for v in raw_items)
-            return super().__new__(cls, items)
+        items = tuple(flatten(value))
+        if not items:
+            raise ValueError('пустой список MyID')
 
-        if isinstance(value, (list, tuple)):
-            items = tuple(MyID(v) for v in value)
-            return super().__new__(cls, items)
-
-        raise ValueError(f'Невозможно создать MyIDTuple из {value!r}')
+        return super().__new__(cls, items)
 
     @classmethod
-    def __get_pydantic_core_schema__(cls, source: type, handler: GetCoreSchemaHandler):
-        """
-        Интеграция с Pydantic.
-        При валидации value вызывается new.
-        Сериализация — в строку через ','.
-        """
+    def __get_pydantic_core_schema__(cls, source, handler):
         def validate(value):
             try:
                 return cls(value)
-            except ValueError as e:
+            except Exception as e:
                 raise ValueError(f'Невалидный MyIDTuple: {e}') from e
 
         return core_schema.no_info_plain_validator_function(
