@@ -43,6 +43,8 @@ class MyID(str):
             value = cls._generate()
         else:
             value = args[0]
+            if isinstance(value, bytes):
+                value = value.decode('utf-8')
             if not isinstance(value, str) or not cls._pattern.fullmatch(value):
                 raise ValueError(f'Invalid uid format: {value}')
         return super().__new__(cls, value)
@@ -81,6 +83,8 @@ class MyID(str):
         def validate(value: str) -> MyID:
             if isinstance(value, cls):
                 return value
+            if isinstance(value, bytes):
+                value = value.decode('utf-8')
             return cls(value)
         return core_schema.no_info_plain_validator_function(
             function=validate,
@@ -107,6 +111,8 @@ class MyIDTuple(tuple):
                         yield from flatten(part)
                 else:
                     yield MyID(v)
+            elif isinstance(v, bytes):
+                yield MyID(v.decode('utf-8'))
             elif isinstance(v, (list, tuple)):
                 for item in v:
                     yield from flatten(item)
